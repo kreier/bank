@@ -23,7 +23,20 @@ let db: Database;
 const filters: Filters = { accountId: 'all', currency: 'all', year: 'all' };
 
 async function main() {
-  db = await getDb();
+  app.innerHTML = `<p class="subtitle">Loading…</p>`;
+  try {
+    db = await getDb();
+  } catch (err) {
+    console.error('Failed to initialize database:', err);
+    app.innerHTML = `
+      <h1>Bank</h1>
+      <div class="panel">
+        <h2>Couldn't start</h2>
+        <p>${err instanceof Error ? err.message : String(err)}</p>
+        <p class="account-meta">Check the browser console for details. This usually means the sql.js WASM file failed to load.</p>
+      </div>`;
+    return;
+  }
   render();
 }
 

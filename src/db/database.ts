@@ -1,9 +1,11 @@
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
+// '?url' tells Vite to emit this as a standalone asset and give us its final
+// URL (hashed, and correctly prefixed with `base` in both dev and build) —
+// so the wasm binary ships from your own repo instead of an external CDN.
+// This matters here: a CDN fetch failing silently (blocked network, offline,
+// ad blocker) is the most likely cause of a blank screen with no visible error.
+import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 import { schema } from './schema';
-
-// sql.js ships a .wasm binary that Vite doesn't need to bundle — pulling it
-// from a CDN keeps the repo/build simple. Pin the version to match package.json.
-const SQL_JS_VERSION = '1.10.3';
 
 const IDB_NAME = 'bank-app';
 const IDB_STORE = 'sqlite';
@@ -14,9 +16,7 @@ let db: Database | null = null;
 
 function loadSqlJs(): Promise<SqlJsStatic> {
   if (!sqlPromise) {
-    sqlPromise = initSqlJs({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/sql.js@${SQL_JS_VERSION}/dist/${file}`,
-    });
+    sqlPromise = initSqlJs({ locateFile: () => sqlWasmUrl });
   }
   return sqlPromise;
 }
