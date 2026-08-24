@@ -1,5 +1,8 @@
 # bank
 
+![GitHub License](https://img.shields.io/github/license/kreier/bank)
+![GitHub Release](https://img.shields.io/github/v/release/kreier/bank)
+
 Personal multi-currency bank ledger. Runs entirely in the browser — no
 backend, no server-side storage. The database is [sql.js](https://sql.js.org/)
 (SQLite compiled to WebAssembly), persisted to IndexedDB between sessions,
