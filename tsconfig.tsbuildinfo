@@ -1,0 +1,1 @@
+{"root":["./src/main.ts","./src/db/database.ts","./src/db/hash.ts","./src/db/schema.ts","./src/import/importCsv.ts","./src/parsers/generic.ts","./src/parsers/index.ts","./src/parsers/types.ts","./src/parsers/vietcombank.ts"],"version":"5.9.3"}
