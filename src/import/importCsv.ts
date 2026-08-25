@@ -2,6 +2,7 @@ import type { Database } from 'sql.js';
 import { sha256 } from '../db/hash';
 import { persist } from '../db/database';
 import type { BankParser } from '../parsers/types';
+import { validateRows, checkBalanceContinuity } from './validate';
 
 export interface ImportResult {
   status: 'skipped-duplicate-file' | 'imported';
@@ -9,6 +10,7 @@ export interface ImportResult {
   rowsSkippedAsDuplicate: number;
   rowsConflicting: { date: string; description: string; oldBalance: number; newBalance: number }[];
   dateRange: { start: string; end: string } | null;
+  warnings: string[];
 }
 
 export async function importCsvFile(
@@ -31,10 +33,12 @@ export async function importCsvFile(
       rowsSkippedAsDuplicate: 0,
       rowsConflicting: [],
       dateRange: null,
+      warnings: [],
     };
   }
 
   const rows = parser.parse(csvText);
+  const warnings = [...validateRows(rows), ...checkBalanceContinuity(rows)];
   let inserted = 0;
   let skippedDuplicate = 0;
   const conflicts: ImportResult['rowsConflicting'] = [];
@@ -102,5 +106,6 @@ export async function importCsvFile(
     rowsSkippedAsDuplicate: skippedDuplicate,
     rowsConflicting: conflicts,
     dateRange: minDate && maxDate ? { start: minDate, end: maxDate } : null,
+    warnings,
   };
 }

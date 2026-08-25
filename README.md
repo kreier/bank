@@ -11,9 +11,13 @@ and exportable as a plain `.sqlite` file at any time.
 ## Stack
 
 - **Vite** + plain TypeScript (no framework)
-- **sql.js** for the database, loaded from a CDN at runtime
+- **sql.js** for the database — its WASM binary is bundled by Vite (`?url`
+  import in `src/db/database.ts`), not fetched from a CDN, so the app has no
+  external runtime dependency and works offline
 - **IndexedDB** to persist the serialized database between page loads
 - Deployed via **GitHub Actions** to GitHub Pages
+- Light/dark theme, saved to `localStorage` (`src/lib/theme.ts`), defaulting
+  to your OS preference
 
 ## Getting started
 
@@ -33,11 +37,29 @@ Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds and
 publishes to GitHub Pages. In the repo settings, set **Pages → Source** to
 **GitHub Actions** (not "deploy from branch").
 
+### Local CSV auto-import (dev only)
+
+Drop CSV exports into `import/<HANDLE>/*.csv` at the project root — e.g.
+`import/BIDV-old/2016-12-31_BIDV.csv` — where `<HANDLE>` matches an
+account's **Handle** field exactly (set it in the Accounts panel). Next
+time you run `npm run dev`, a "Local import" panel lists what it found and
+matched, with a button to import them all in one go.
+
+`import/` is gitignored and only scanned in dev mode — the folder scan
+itself (`src/import/autoImport.ts`) is excluded from the production build
+via a dynamic import gated on `import.meta.env.DEV`, so nothing under
+`import/` is ever bundled or deployed.
+
 ## Data model
 
 See `src/db/schema.ts` for the full schema. Summary:
 
-- `accounts` — one row per bank account (currency, type: checking/savings/stock/term_deposit)
+- `accounts` — one row per bank account (currency, type:
+  checking/savings/stock/term_deposit). `handle` is an optional short code
+  (e.g. `BIDV-old`) shown in the Transactions table instead of the full
+  bank/account name, and used to match files under `import/<HANDLE>/`.
+  Bank name, account name, and handle are all editable from the Accounts
+  panel
 - `import_batches` — one row per CSV file imported, keyed by a hash of the
   file contents, so re-importing the same export is a no-op
 - `transactions` — one row per statement line, keyed by a hash of
@@ -53,17 +75,32 @@ See `src/db/schema.ts` for the full schema. Summary:
 
 ## Adding a bank's CSV parser
 
-Each bank exports CSVs a little differently. Copy `src/parsers/vietcombank.ts`
-as a template, adjust the column order / date format / number format to match
-a real exported file, give it a `detect()` that recognizes that bank's
-header line, and register it in `src/parsers/index.ts`. If you don't want to
-write a dedicated parser for a low-volume account, `src/parsers/generic.ts`
-takes a manual column mapping instead.
+Each bank exports CSVs a little differently. Copy `src/parsers/bidv.ts` (a
+real, working example) or `src/parsers/vietcombank.ts` (an unverified
+template) as a starting point, adjust the column order / date format /
+number format to match a real exported file, give it a `detect()` that
+recognizes that bank's header line, and register it in
+`src/parsers/index.ts`. If you don't want to write a dedicated parser for a
+low-volume account, `src/parsers/generic.ts` takes a manual column mapping
+instead.
+
+Every parser should produce `date` as `'YYYY-MM-DD HH:MM'` — use the
+`toDateTime()` helper from `src/parsers/types.ts`, which appends `00:00`
+when a source only has a date. Consistent timestamps (not just dates) matter
+for real statements: BIDV's own export has rows that aren't in chronological
+order, and only the time component lets the app sort them out and catch it
+(see `checkBalanceContinuity` in `src/import/validate.ts`, which reconciles
+the running balance and warns wherever it doesn't match the statement —
+shown as an expandable warning list after each import).
 
 ## What's scaffolded vs. what's next
 
-Working now: accounts, CSV import with dedup, transaction table with
-account/currency/year filters, overview totals, sqlite export/import.
+Working now: accounts (editable, with a display handle), CSV import with
+dedup and post-import warnings (bad rows, balance-continuity checks),
+transaction table with debit/credit split and account/currency/year filters
+sorted oldest-first, overview totals, sqlite export/import, light/dark
+theme, local-folder auto-import for dev, one real parser (BIDV) plus a
+Vietcombank template and a generic manual-mapping fallback.
 
 Not yet built — left for you to extend:
 
@@ -74,17 +111,16 @@ Not yet built — left for you to extend:
   rates are harder to source consistently back to 2011, so expect gaps —
   the schema is designed to tolerate missing months (`getRateToUsd` falls
   back to the nearest earlier rate) rather than fail.
-- **Gap/anomaly detection** — flagging missing months of transactions per
-  account, or balance jumps that don't match the sum of transactions in
-  between. `import_batches.date_range_start/end` gives you the raw material
-  for this; a query comparing consecutive batches per account is the
-  natural next step.
+- **Gap/anomaly detection across imports** — the per-file balance check
+  exists, but nothing yet flags missing months of transactions *between*
+  import batches for an account. `import_batches.date_range_start/end` is
+  the raw material for that; a query comparing consecutive batches per
+  account is the natural next step.
 - **Stocks & fixed deposits UI** — the tables exist (`securities`,
   `security_transactions`, `fixed_deposits`) but there's no import/entry
   form yet, only the CSV/transaction flow for regular accounts.
 - **OPFS storage** — IndexedDB works everywhere but is slower for a large
   15-year transaction history; Origin Private File System is worth
   switching to once the dataset is large enough to notice.
-- **Per-bank parsers** — only Vietcombank is stubbed in as a template. Real
-  parsers need real sample exports from each of your 12 accounts to get the
-  column order and date/number formats right.
+- **Per-bank parsers** — 10 of your 12 accounts still need one. Copy
+  `bidv.ts`, adjust to match a real export, register in `parsers/index.ts`.

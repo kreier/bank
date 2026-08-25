@@ -1,5 +1,5 @@
 import type { BankParser, ParsedRow } from './types';
-import { splitCsvLine } from './types';
+import { splitCsvLine, toDateTime } from './types';
 
 // TEMPLATE — adjust column order and date format to match your actual
 // Vietcombank export once you have a real file in hand. The shape here
@@ -44,7 +44,7 @@ export const vietcombankParser: BankParser = {
       const credit = parseVnNumber(creditRaw);
 
       rows.push({
-        date: parseVnDate(dateRaw),
+        date: toDateTime(parseVnDate(dateRaw)),
         amount: credit - debit,
         balance_after: balanceRaw ? parseVnNumber(balanceRaw) : undefined,
         description: description ?? '',

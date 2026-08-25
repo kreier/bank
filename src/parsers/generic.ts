@@ -1,5 +1,5 @@
 import type { BankParser, ParsedRow } from './types';
-import { splitCsvLine } from './types';
+import { splitCsvLine, toDateTime } from './types';
 
 export interface ColumnMapping {
   dateCol: number;
@@ -38,7 +38,7 @@ export function genericParser(mapping: ColumnMapping): BankParser {
         if (!dateRaw) continue;
 
         rows.push({
-          date: toIsoDate(dateRaw, mapping.dateFormat),
+          date: toDateTime(toIsoDate(dateRaw, mapping.dateFormat)),
           amount: Number(cols[mapping.amountCol]?.replace(/,/g, '') ?? 0),
           balance_after:
             mapping.balanceCol !== undefined

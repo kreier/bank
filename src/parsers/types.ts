@@ -41,3 +41,12 @@ export function splitCsvLine(line: string): string[] {
   fields.push(cur);
   return fields.map((f) => f.trim());
 }
+
+/**
+ * Normalize to 'YYYY-MM-DD HH:MM' so every account's transactions sort and
+ * compare consistently, even when the source CSV only has a date. Accepts
+ * an already-full 'YYYY-MM-DD HH:MM' unchanged.
+ */
+export function toDateTime(isoDate: string, time = '00:00'): string {
+  return /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2})?$/.test(isoDate) && isoDate.includes(' ') ? isoDate : `${isoDate} ${time}`;
+}
