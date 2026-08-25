@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   bank_name     TEXT NOT NULL,
   account_name  TEXT NOT NULL,
+  handle        TEXT UNIQUE,     -- short code for display/auto-import, e.g. 'BIDV-old'
   currency      TEXT NOT NULL CHECK (currency IN ('VND','USD','EUR')),
   account_type  TEXT NOT NULL DEFAULT 'checking'
                 CHECK (account_type IN ('checking','savings','stock','term_deposit')),

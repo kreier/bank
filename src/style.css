@@ -1,13 +1,28 @@
-:root {
+:root,
+[data-theme='dark'] {
   --bg: #101418;
   --panel: #161c22;
+  --field: #1c242c;
   --border: #263038;
+  --row-border: rgba(255, 255, 255, 0.04);
   --text: #dde3e8;
   --muted: #7c8a96;
   --accent: #4fb0a5;
   --warn: #d98c4f;
   --font-ui: 'Inter', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+}
+
+[data-theme='light'] {
+  --bg: #f4f5f6;
+  --panel: #ffffff;
+  --field: #f0f1f3;
+  --border: #dde1e4;
+  --row-border: rgba(0, 0, 0, 0.06);
+  --text: #1b2430;
+  --muted: #6b7480;
+  --accent: #1f7a6e;
+  --warn: #b5601f;
 }
 
 * {
@@ -29,6 +44,13 @@ body {
   padding: 32px 24px 80px;
 }
 
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
 h1 {
   font-size: 20px;
   font-weight: 600;
@@ -40,6 +62,10 @@ h1 {
   color: var(--muted);
   font-size: 13px;
   margin: 0 0 28px;
+}
+
+#theme-toggle {
+  flex-shrink: 0;
 }
 
 .panel {
@@ -91,8 +117,9 @@ h1 {
 
 select,
 input[type='file'],
+input[type='text'],
 button {
-  background: #1c242c;
+  background: var(--field);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -105,10 +132,16 @@ button {
   cursor: pointer;
   border-color: var(--accent);
   color: var(--accent);
+  background: transparent;
 }
 
 button:hover {
   background: rgba(79, 176, 165, 0.12);
+}
+
+button.ghost {
+  border-color: var(--border);
+  color: var(--muted);
 }
 
 table {
@@ -130,21 +163,23 @@ th {
 
 td {
   padding: 7px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--row-border);
 }
 
 td.amount,
+td.debit,
+td.credit,
 td.balance {
   font-family: var(--font-mono);
   text-align: right;
   white-space: nowrap;
 }
 
-td.amount.negative {
+td.debit {
   color: var(--warn);
 }
 
-td.amount.positive {
+td.credit {
   color: var(--accent);
 }
 
@@ -158,8 +193,10 @@ td.amount.positive {
 .account-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 10px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--row-border);
 }
 
 .account-row:last-child {
@@ -170,13 +207,58 @@ td.amount.positive {
   font-weight: 500;
 }
 
+.account-handle {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 12px;
+}
+
 .account-meta {
   color: var(--muted);
   font-size: 12px;
+}
+
+.account-edit-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--row-border);
+}
+
+.account-edit-row input {
+  flex: 1;
+  min-width: 100px;
 }
 
 .actions {
   display: flex;
   gap: 10px;
   margin-top: 16px;
+}
+
+.warnings {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--warn);
+  border-radius: 6px;
+  background: rgba(217, 140, 79, 0.08);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.warnings summary {
+  cursor: pointer;
+  color: var(--warn);
+  font-weight: 500;
+}
+
+.warnings ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.warnings li {
+  margin-bottom: 4px;
 }

@@ -1,5 +1,5 @@
 import type { BankParser, ParsedRow } from './types';
-import { splitCsvLine } from './types';
+import { splitCsvLine, toDateTime } from './types';
 
 // Built from a real BIDV export (2016). Header: date,details,debit,credit,balance
 // - date is already ISO: "YYYY-MM-DD HH:MM". Keep the full timestamp, not just
@@ -40,7 +40,7 @@ export const bidvParser: BankParser = {
       const credit = parseBidvNumber(creditRaw);
 
       rows.push({
-        date: dateRaw, // full "YYYY-MM-DD HH:MM" — see note above on ordering
+        date: toDateTime(dateRaw), // full "YYYY-MM-DD HH:MM" — see note above on ordering
         amount: credit - debit,
         balance_after: balanceRaw && balanceRaw.trim() !== '' ? parseBidvNumber(balanceRaw) : undefined,
         description: description ?? '',

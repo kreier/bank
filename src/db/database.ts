@@ -53,6 +53,15 @@ export async function persist(): Promise<void> {
   });
 }
 
+/** Add columns/tables that a schema change introduced, to databases created before it. */
+function migrate(database: Database): void {
+  const cols = database.exec('PRAGMA table_info(accounts)');
+  const colNames = (cols[0]?.values ?? []).map((r) => r[1] as string);
+  if (!colNames.includes('handle')) {
+    database.run('ALTER TABLE accounts ADD COLUMN handle TEXT');
+  }
+}
+
 /** Get the (singleton) database, loading it from IndexedDB or creating it fresh. */
 export async function getDb(): Promise<Database> {
   if (db) return db;
@@ -60,6 +69,7 @@ export async function getDb(): Promise<Database> {
   const saved = await loadPersisted();
   db = saved ? new SQL.Database(saved) : new SQL.Database();
   db.run(schema);
+  migrate(db);
   return db;
 }
 
@@ -81,5 +91,6 @@ export async function loadDbFromFile(bytes: Uint8Array): Promise<void> {
   const SQL = await loadSqlJs();
   db = new SQL.Database(bytes);
   db.run(schema); // no-op if tables already exist; adds anything missing
+  migrate(db);
   await persist();
 }
