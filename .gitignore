@@ -8,3 +8,6 @@ node_modules
 # Created site
 dist/
 /import/
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo
